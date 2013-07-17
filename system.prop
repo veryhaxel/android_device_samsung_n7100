@@ -7,3 +7,10 @@ rild.libpath=/system/lib/libsec-ril.so
 rild.libargs=-d /dev/ttyS0
 ro.sf.lcd_density=320
 ro.lcd_min_brightness=20
+
+# Samsung n7100 Hardware Info
+ro.device.cpu=Quad-core 1.6 GHz Cortex-A9
+ro.device.gpu=Mali-400MP
+ro.device.rear_cam=8 MP
+ro.device.front_cam=1.9 MP
+ro.device.screen_res=720 x 1280 pixels
