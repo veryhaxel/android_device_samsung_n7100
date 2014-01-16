@@ -209,7 +209,7 @@ static void in_update_aux_channels(struct m0_stream_in *in, effect_handle_t effe
 
 /* The enable flag when 0 makes the assumption that enums are disabled by
  * "Off" and integers/booleans by 0 */
-static int set_bigroute_by_array(struct mixer *mixer, struct route_setting *route,
+static int set_voicecall_route_by_array(struct mixer *mixer, struct route_setting *route,
                               int enable)
 {
     struct mixer_ctl *ctl;
@@ -588,7 +588,19 @@ static void select_mode(struct m0_audio_device *adev)
             adev->in_call = 0;
             end_call(adev);
             force_all_standby(adev);
+
+            ALOGD("%s: set voicecall route: voicecall_default_disable", __func__);
+            set_voicecall_route_by_array(adev->mixer, voicecall_default_disable, 1);
+            ALOGD("%s: set voicecall route: default_input_disable", __func__);
+            set_voicecall_route_by_array(adev->mixer, default_input_disable, 1);
+            ALOGD("%s: set voicecall route: headset_input_disable", __func__);
+            set_voicecall_route_by_array(adev->mixer, headset_input_disable, 1);
+            ALOGD("%s: set voicecall route: bt_disable", __func__);
+            set_voicecall_route_by_array(adev->mixer, bt_disable, 1);
+
             select_output_device(adev);
+            //Force Input Standby
+            adev->in_device = AUDIO_DEVICE_NONE;
             select_input_device(adev);
         }
     }
@@ -668,26 +680,26 @@ static void select_output_device(struct m0_audio_device *adev)
 
         if (headset_on || headphone_on || speaker_on || earpiece_on) {
             ALOGD("%s: set voicecall route: voicecall_default", __func__);
-            set_bigroute_by_array(adev->mixer, voicecall_default, 1);
+            set_voicecall_route_by_array(adev->mixer, voicecall_default, 1);
         } else {
             ALOGD("%s: set voicecall route: voicecall_default_disable", __func__);
-            set_bigroute_by_array(adev->mixer, voicecall_default_disable, 1);
+            set_voicecall_route_by_array(adev->mixer, voicecall_default_disable, 1);
         }
 
         if (speaker_on || earpiece_on || headphone_on) {
             ALOGD("%s: set voicecall route: default_input", __func__);
-            set_bigroute_by_array(adev->mixer, default_input, 1);
+            set_voicecall_route_by_array(adev->mixer, default_input, 1);
         } else {
             ALOGD("%s: set voicecall route: default_input_disable", __func__);
-            set_bigroute_by_array(adev->mixer, default_input_disable, 1);
+            set_voicecall_route_by_array(adev->mixer, default_input_disable, 1);
         }
 
         if (headset_on) {
             ALOGD("%s: set voicecall route: headset_input", __func__);
-            set_bigroute_by_array(adev->mixer, headset_input, 1);
+            set_voicecall_route_by_array(adev->mixer, headset_input, 1);
         } else {
             ALOGD("%s: set voicecall route: headset_input_disable", __func__);
-            set_bigroute_by_array(adev->mixer, headset_input_disable, 1);
+            set_voicecall_route_by_array(adev->mixer, headset_input_disable, 1);
         }
 
         if (bt_on) {
@@ -695,12 +707,12 @@ static void select_output_device(struct m0_audio_device *adev)
             end_call(adev);
             start_call(adev);
             ALOGD("%s: set voicecall route: bt_input", __func__);
-            set_bigroute_by_array(adev->mixer, bt_input, 1);
+            set_voicecall_route_by_array(adev->mixer, bt_input, 1);
             ALOGD("%s: set voicecall route: bt_output", __func__);
-            set_bigroute_by_array(adev->mixer, bt_output, 1);
+            set_voicecall_route_by_array(adev->mixer, bt_output, 1);
         } else {
             ALOGD("%s: set voicecall route: bt_disable", __func__);
-            set_bigroute_by_array(adev->mixer, bt_disable, 1);
+            set_voicecall_route_by_array(adev->mixer, bt_disable, 1);
         }
 
         set_incall_device(adev);
@@ -2577,12 +2589,12 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
             ALOGE("%s: enabling two mic control", __func__);
             ril_set_two_mic_control(&adev->ril, AUDIENCE, TWO_MIC_SOLUTION_ON);
             /* sub mic */
-            set_bigroute_by_array(adev->mixer, noise_suppression, 1);
+            set_voicecall_route_by_array(adev->mixer, noise_suppression, 1);
         } else {
             ALOGE("%s: disabling two mic control", __func__);
             ril_set_two_mic_control(&adev->ril, AUDIENCE, TWO_MIC_SOLUTION_OFF);
             /* sub mic */
-            set_bigroute_by_array(adev->mixer, noise_suppression_disable, 1);
+            set_voicecall_route_by_array(adev->mixer, noise_suppression_disable, 1);
         }
     }
 
@@ -2825,86 +2837,85 @@ static void adev_config_start(void *data, const XML_Char *elem,
     unsigned int i, j;
 
     for (i = 0; attr[i]; i += 2) {
-    if (strcmp(attr[i], "name") == 0)
-        name = attr[i + 1];
+        if (strcmp(attr[i], "name") == 0)
+            name = attr[i + 1];
 
-    if (strcmp(attr[i], "val") == 0)
-        val = attr[i + 1];
+        if (strcmp(attr[i], "val") == 0)
+            val = attr[i + 1];
     }
 
     if (strcmp(elem, "device") == 0) {
-    if (!name) {
-        ALOGE("Unnamed device\n");
-        return;
-    }
-
-    for (i = 0; i < sizeof(dev_names) / sizeof(dev_names[0]); i++) {
-        if (strcmp(dev_names[i].name, name) == 0) {
-        ALOGI("Allocating device %s\n", name);
-        dev_cfg = realloc(s->adev->dev_cfgs,
-                  (s->adev->num_dev_cfgs + 1)
-                  * sizeof(*dev_cfg));
-        if (!dev_cfg) {
-            ALOGE("Unable to allocate dev_cfg\n");
+        if (!name) {
+            ALOGE("Unnamed device\n");
             return;
         }
 
-        s->dev = &dev_cfg[s->adev->num_dev_cfgs];
-        memset(s->dev, 0, sizeof(*s->dev));
-        s->dev->mask = dev_names[i].mask;
+        for (i = 0; i < sizeof(dev_names) / sizeof(dev_names[0]); i++) {
+            if (strcmp(dev_names[i].name, name) == 0) {
+            ALOGI("Allocating device %s\n", name);
+            dev_cfg = realloc(s->adev->dev_cfgs,
+                      (s->adev->num_dev_cfgs + 1)
+                      * sizeof(*dev_cfg));
+            if (!dev_cfg) {
+                ALOGE("Unable to allocate dev_cfg\n");
+                return;
+            }
 
-        s->adev->dev_cfgs = dev_cfg;
-        s->adev->num_dev_cfgs++;
+            s->dev = &dev_cfg[s->adev->num_dev_cfgs];
+            memset(s->dev, 0, sizeof(*s->dev));
+            s->dev->mask = dev_names[i].mask;
+
+            s->adev->dev_cfgs = dev_cfg;
+            s->adev->num_dev_cfgs++;
+            }
         }
-    }
-
     } else if (strcmp(elem, "path") == 0) {
-    if (s->path_len)
-        ALOGW("Nested paths\n");
+        if (s->path_len)
+            ALOGW("Nested paths\n");
 
-    /* If this a path for a device it must have a role */
-    if (s->dev) {
-        /* Need to refactor a bit... */
-        if (strcmp(name, "on") == 0) {
-        s->on = true;
-        } else if (strcmp(name, "off") == 0) {
-        s->on = false;
-        } else {
-        ALOGW("Unknown path name %s\n", name);
+        /* If this a path for a device it must have a role */
+        if (s->dev) {
+            /* Need to refactor a bit... */
+            if (strcmp(name, "on") == 0) {
+            s->on = true;
+            } else if (strcmp(name, "off") == 0) {
+            s->on = false;
+            } else {
+            ALOGW("Unknown path name %s\n", name);
+            }
         }
-    }
 
     } else if (strcmp(elem, "ctl") == 0) {
-    struct route_setting *r;
+        struct route_setting *r;
 
-    if (!name) {
-        ALOGE("Unnamed control\n");
-        return;
-    }
+        if (!name) {
+            ALOGE("Unnamed control\n");
+            return;
+        }
 
-    if (!val) {
-        ALOGE("No value specified for %s\n", name);
-        return;
-    }
+        if (!val) {
+            ALOGE("No value specified for %s\n", name);
+            return;
+        }
 
-    ALOGV("Parsing control %s => %s\n", name, val);
+        ALOGV("Parsing control %s => %s\n", name, val);
 
-    r = realloc(s->path, sizeof(*r) * (s->path_len + 1));
-    if (!r) {
-        ALOGE("Out of memory handling %s => %s\n", name, val);
-        return;
-    }
+        r = realloc(s->path, sizeof(*r) * (s->path_len + 1));
+        if (!r) {
+            ALOGE("Out of memory handling %s => %s\n", name, val);
+            return;
+        }
 
-    r[s->path_len].ctl_name = strdup(name);
-    r[s->path_len].strval = NULL;
+        r[s->path_len].ctl_name = strdup(name);
+        r[s->path_len].strval = NULL;
 
-    /* This can be fooled but it'll do */
-    r[s->path_len].intval = atoi(val);
-    if (!r[s->path_len].intval && strcmp(val, "0") != 0)
-        r[s->path_len].strval = strdup(val);
+        /* This can be fooled but it'll do */
+        r[s->path_len].intval = atoi(val);
+        if (!r[s->path_len].intval && strcmp(val, "0") != 0)
+            r[s->path_len].strval = strdup(val);
 
-    s->path = r;
-    s->path_len++;
+        s->path = r;
+        s->path_len++;
     }
 }
 
@@ -3053,10 +3064,6 @@ static int adev_open(const hw_module_t* module, const char* name,
         return -EINVAL;
     }
 
-    /* +30db boost for mics */
-    adev->mixer_ctls.mixinl_in1l_volume = mixer_get_ctl_by_name(adev->mixer, "MIXINL IN1L Volume");
-    adev->mixer_ctls.mixinl_in2l_volume = mixer_get_ctl_by_name(adev->mixer, "MIXINL IN2L Volume");
-
     ret = adev_config_parse(adev);
     if (ret != 0)
         goto err_mixer;
@@ -3065,8 +3072,12 @@ static int adev_open(const hw_module_t* module, const char* name,
     pthread_mutex_lock(&adev->lock);
     adev->mode = AUDIO_MODE_NORMAL;
     adev->out_device = AUDIO_DEVICE_OUT_SPEAKER;
-    adev->in_device = AUDIO_DEVICE_IN_BUILTIN_MIC & ~AUDIO_DEVICE_BIT_IN;
+    adev->in_device = AUDIO_DEVICE_NONE;
     select_devices(adev);
+
+    /* +30db boost for mics */
+    adev->mixer_ctls.mixinl_in1l_volume = mixer_get_ctl_by_name(adev->mixer, "MIXINL IN1L Volume");
+    adev->mixer_ctls.mixinl_in2l_volume = mixer_get_ctl_by_name(adev->mixer, "MIXINL IN2L Volume");
 
     adev->pcm_modem_dl = NULL;
     adev->pcm_modem_ul = NULL;
