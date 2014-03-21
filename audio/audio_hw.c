@@ -717,13 +717,7 @@ static void select_input_device(struct m0_audio_device *adev)
             ALOGD("%s: AUDIO_DEVICE_IN_BUILTIN_MIC", __func__);
             break;
         case AUDIO_DEVICE_IN_BACK_MIC:
-<<<<<<< HEAD
-            // Force use both mics for video recording
-            adev->in_device = (AUDIO_DEVICE_IN_BACK_MIC | AUDIO_DEVICE_IN_BUILTIN_MIC) & ~AUDIO_DEVICE_BIT_IN;
-            ALOGD("%s: AUDIO_DEVICE_IN_BACK_MIC and AUDIO_DEVICE_IN_BUILTIN_MIC", __func__);
-=======
             ALOGD("%s: AUDIO_DEVICE_IN_BACK_MIC", __func__);
->>>>>>> 963097a... n7100: fix static in video
             break;
         case AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET:
             ALOGD("%s: AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET", __func__);
