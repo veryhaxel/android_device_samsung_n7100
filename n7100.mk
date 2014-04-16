@@ -48,10 +48,13 @@ PRODUCT_COPY_FILES += \
 
 # Product specific Packages
 PRODUCT_PACKAGES += \
-    DeviceSettings \
     libsecril-client \
     libsecril-client-sap \
     SamsungServiceMode
+
+# Sensors
+PRODUCT_PACKAGES += \
+    sensors.smdk4x12
 
 # NFC
 PRODUCT_PACKAGES += \
@@ -64,10 +67,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     packages/apps/Nfc/migrate_nfc.txt:system/etc/updatecmds/migrate_nfc.txt \
     frameworks/base/nfc-extras/com.android.nfc_extras.xml:system/etc/permissions/com.android.nfc_extras.xml \
-    frameworks/native/data/etc/android.hardware.bluetooth_le.xml:system/etc/permissions/android.hardware.bluetooth_le.xml \
     frameworks/native/data/etc/android.hardware.nfc.xml:system/etc/permissions/android.hardware.nfc.xml \
     vendor/cm/prebuilt/updateme/n7100/update_me.xml:system/update_me.xml
-    
 # NFCEE access control
 ifeq ($(TARGET_BUILD_VARIANT),user)
     NFCEE_ACCESS_PATH := $(LOCAL_PATH)/configs/nfcee_access.xml
