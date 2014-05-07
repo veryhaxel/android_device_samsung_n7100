@@ -31,23 +31,6 @@ BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/samsung/n7100/bluetooth
 TARGET_KERNEL_SOURCE := kernel/samsung/smdk4412
 TARGET_KERNEL_CONFIG := cyanogenmod_n7100_defconfig
 
-# Selinux
-BOARD_SEPOLICY_DIRS := \
-    device/samsung/n7100/selinux
-
-BOARD_SEPOLICY_UNION := \
-    device.te \
-    domain.te \
-    file.te \
-    file_contexts \
-    init.te \
-    mediaserver.te \
-    rild.te \
-    system.te \
-    ueventd.te \
-    vold.te \
-    wpa_supplicant.te
-
 # assert
 TARGET_OTA_ASSERT_DEVICE := t03g,n7100,GT-N7100
 
@@ -57,3 +40,6 @@ TARGET_OTA_ASSERT_DEVICE := t03g,n7100,GT-N7100
 # Recovery
 TARGET_RECOVERY_FSTAB := device/samsung/n7100/rootdir/fstab.smdk4x12
 RECOVERY_FSTAB_VERSION := 2
+
+# Compatibility with pre-kitkat Sensor HALs
+SENSORS_NEED_SETRATE_ON_ENABLE := true

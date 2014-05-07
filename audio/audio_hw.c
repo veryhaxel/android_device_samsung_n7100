@@ -73,7 +73,7 @@ struct pcm_config pcm_config_capture = {
 
 struct pcm_config pcm_config_vx = {
     .channels = 2,
-    .rate = VX_NB_SAMPLING_RATE,
+    .rate = VX_WB_SAMPLING_RATE,
     .period_size = 160,
     .period_count = 2,
     .format = PCM_FORMAT_S16_LE,
@@ -357,7 +357,13 @@ static int start_call(struct m0_audio_device *adev)
     int bt_on;
 
     bt_on = adev->out_device & AUDIO_DEVICE_OUT_ALL_SCO;
-    pcm_config_vx.rate = adev->wb_amr ? VX_WB_SAMPLING_RATE : VX_NB_SAMPLING_RATE;
+
+    if (bt_on) {
+       /* use amr-nb for bluetooth */
+       pcm_config_vx.rate = VX_NB_SAMPLING_RATE;
+    } else {
+       pcm_config_vx.rate = adev->wb_amr ? VX_WB_SAMPLING_RATE : VX_NB_SAMPLING_RATE;
+    }
 
     /* Open modem PCM channels */
     if (adev->pcm_modem_dl == NULL) {
@@ -586,6 +592,7 @@ static void select_mode(struct m0_audio_device *adev)
              adev->in_call, adev->mode);
         if (adev->in_call) {
             adev->in_call = 0;
+            ril_set_call_clock_sync(&adev->ril, SOUND_CLOCK_STOP);
             end_call(adev);
             force_all_standby(adev);
             select_output_device(adev);
@@ -691,9 +698,6 @@ static void select_output_device(struct m0_audio_device *adev)
         }
 
         if (bt_on) {
-            // bt uses a different port (PORT_BT) for playback, reopen the pcms
-            end_call(adev);
-            start_call(adev);
             ALOGD("%s: set voicecall route: bt_input", __func__);
             set_bigroute_by_array(adev->mixer, bt_input, 1);
             ALOGD("%s: set voicecall route: bt_output", __func__);
@@ -702,7 +706,6 @@ static void select_output_device(struct m0_audio_device *adev)
             ALOGD("%s: set voicecall route: bt_disable", __func__);
             set_bigroute_by_array(adev->mixer, bt_disable, 1);
         }
-
         set_incall_device(adev);
     }
 }
@@ -2805,7 +2808,7 @@ static const struct {
     { AUDIO_DEVICE_OUT_SPEAKER, "speaker" },
     { AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE, "headphone" },
     { AUDIO_DEVICE_OUT_EARPIECE, "earpiece" },
-    { AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET, "analog-dock" },
+    { AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET, "analogue-dock" },
     { AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET, "digital-dock" },
     { AUDIO_DEVICE_OUT_ALL_SCO, "sco-out" },
 
@@ -3103,7 +3106,7 @@ struct audio_module HAL_MODULE_INFO_SYM = {
         .module_api_version = AUDIO_MODULE_API_VERSION_0_1,
         .hal_api_version = HARDWARE_HAL_API_VERSION,
         .id = AUDIO_HARDWARE_MODULE_ID,
-        .name = "M0 audio HW HAL",
+        .name = "T03G audio HW HAL",
         .author = "The CyanogenMod Project",
         .methods = &hal_module_methods,
     },
