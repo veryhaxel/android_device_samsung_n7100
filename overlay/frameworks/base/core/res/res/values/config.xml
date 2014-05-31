@@ -117,9 +117,6 @@
     <!-- Boolean to enable stk functionality on Samsung phones -->
     <bool name="config_samsung_stk">true</bool>
 
-    <!-- Boolean to enable stylus gestures  -->
-    <bool name="config_stylusGestures">true</bool>
-
     <!-- Device supports LED flashlight -->
     <bool name="config_enableTorch">true</bool>
 </resources>
