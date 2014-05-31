@@ -38,9 +38,9 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/tiny_hw.xml:system/etc/sound/t03g
 
-# Camera Wrapper
+# Camera
 PRODUCT_PACKAGES += \
-    camera.exynos4
+    camera.smdk4x12
 
 # Gps
 PRODUCT_COPY_FILES += \
@@ -51,6 +51,10 @@ PRODUCT_PACKAGES += \
     libsecril-client \
     libsecril-client-sap \
     SamsungServiceMode
+
+# Sensors
+PRODUCT_PACKAGES += \
+    sensors.smdk4x12
 
 # NFC
 PRODUCT_PACKAGES += \
